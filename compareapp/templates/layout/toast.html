@@ -1,0 +1,59 @@
+{% load static %}
+
+<button type="button" class="hidden" id="liveToastBtn"></button>
+
+<div class="fixed top-0 right-0 m-4 space-y-2 z-50">
+    {% if messages %}
+    {% for message in messages %}
+    <div id="liveToast" class="
+        {% if message.tags == 'error' %}bg-red-500{% endif %}
+        {% if message.tags == 'warning' %}bg-yellow-500{% endif %}
+        {% if message.tags == 'success' %}bg-green-500{% endif %}
+        {% if message.tags == 'info' %}bg-blue-500{% endif %}
+        text-white rounded shadow-lg w-80 md:w-96 transform transition duration-500 ease-in-out hidden translate-x-full" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="flex justify-between items-center px-4 py-1 bg-slate-200 rounded-t text-black">
+            <div class="flex gap-2 items-center">
+                <img src="{% static 'images/feed.png' %}" class="w-8 h-8" alt="logo">
+                <div>
+                    <p class="font-bold">
+                        {% if message.tags == 'error' %}Error{% endif %}
+                        {% if message.tags == 'warning' %}Warning{% endif %}
+                        {% if message.tags == 'success' %}Information{% endif %}
+                        {% if message.tags == 'info' %}Information{% endif %}
+                    </p>
+                </div>
+            </div>
+            <button type="button" class="text-3xl pb-1 hover:text-slate-800" aria-label="Close" onclick="removeToast(this)">
+                &times;
+            </button>
+        </div>
+        <hr class="pt-1">
+        <div class="px-5 py-2 text-lg"><p>{{ message }}</p></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toastTrigger = document.getElementById('liveToastBtn');
+        const toasts = document.querySelectorAll('#liveToast');
+
+        if (toastTrigger && toasts.length > 0) {
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.classList.remove('hidden', 'translate-x-full');
+                    toast.classList.add('translate-x-0');
+                    setTimeout(() => removeToast(toast.querySelector('button')), 4000);
+                }, 100);
+            });
+        }
+    });
+
+    function removeToast(button) {
+        const toast = button.closest('#liveToast');
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.classList.add('hidden'), 500);
+    }
+</script>

@@ -1,0 +1,569 @@
+{% extends "layout/base.html" %}
+
+{% block title %} 
+    Upload Process
+{% endblock title %}
+
+{% block body %}
+    {% load static %}
+    
+    <div class="container mx-auto my-12 px-6">
+        <div class="text-start mb-8">
+            <h1 class="text-3xl font-bold text-white">Upload Process</h1>
+        </div>
+
+        <!-- Navigator -->
+        {% include "layout/navigator.html" with pageInfo="Upload your files and manage them efficiently. If you have at least two files, you can start a comparison." %}
+        
+        <div class="shadow-lg shadow-slate-800 rounded-lg p-6 backdrop-blur-3xl bg-cyan-900">
+            <div class="flex justify-center">
+                <div class="rounded-lg  text-cyan-500 px-5 py-2 flex items-center gap-3"> 
+                    <img src="{% static 'images/compare.png' %}" class="size-10" alt="Compare Icon" srcset="">
+                    <p class="text-xl font-semibold border-b-2 border-white">Comparison Between: <span class="text-rose-500 font-bold" id="comparison_between_title">~</span></p>
+                </div>
+            </div>
+            <div class="flex-row md:flex gap-6">
+                <div class="w-full md:w-[70%]">
+                    <form method="post" enctype="multipart/form-data" class="rounded-lg p-4 border border-cyan-900 bg-cyan-800 mt-4">
+                        <div class="text-slate-200 font-semibold">
+
+                            <div class="flex justify-between items-center gap-4 bg-cyan-900 p-3 rounded-lg">
+                                <p class="text-xl text-slate-300">Documents preparation</p>
+                                <div class="flex justify-between gap-4">
+                                    <button type="button" id="importButton" onclick="openImportModal()" class="flex justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg py-2 px-3">
+                                        <img class="size-6" src="{% static 'images/import.png' %}" alt="" srcset="">Import Data
+                                    </button>
+                                    <button onclick="openCTModal()" class="flex gap-1 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-lg py-2 px-3">
+                                        <img class="size-6" src="{% static 'images/reset.png' %}" alt="" srcset="">Comparison Type
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% csrf_token %}
+                            <div class="my-3">
+                                <label for="report_number" class="block text-md font-medium text-white">Comparison ID</label>
+                                <input type="text" id="report_number" value="{{ new_report_number }}" name="report_number" class="mt-1 form-input rounded w-full text-slate-600 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" readonly required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comparison_date" class="block text-md font-medium text-white">Comparison Date</label>
+                                <input type="date" id="comparison_date"  name="comparison_date" value="{% now 'Y-m-d' %}"  class="mt-1 form-input rounded w-full text-slate-600 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="short_description" class="block text-md font-medium text-white">Short Description</label>
+                                <input type="text" id="short_description" maxlength="255" name="short_description" value="" placeholder="Enter short description"  class="mt-1 form-input rounded w-full text-slate-700 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="block text-md font-medium text-white">Description</label>
+                                <textarea class="mt-1 form-input rounded w-full text-slate-700 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" placeholder="Enter description here..." name="description" id="description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="department_type" class="block text-md font-medium text-white">Department Type</label>
+                                <input type="text" id="department_type" maxlength="255" name="department_type" value="" placeholder="Enter department here"  class="mt-1 form-input rounded w-full text-slate-700 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="documents_format" class="block text-md font-medium text-white">Documents Format</label>
+                                <input type="text" id="documents_format" maxlength="255" name="documents_format"  class="mt-1 form-input rounded w-full text-slate-600 border-cyan-300 focus:ring-cyan-500 focus:border-cyan-500" readonly required>
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="upload_documents" class="mb-2 block text-md font-medium text-white">Upload Documents</label>
+                                <div id="drop-area" class="cursor-pointer p-6 border-dashed border-4 border-gray-300 rounded-lg text-center bg-slate-400 hover:bg-slate-300 hover:border-gray-500 relative">
+                                    <input type="file" id="id_upload_documents" name="upload_documents" class="opacity-0 w-full h-full absolute top-0 left-0 -z-50" multiple required>
+                                    <p class="text-white">Drag & Drop files here or click to upload</p>
+                                    <p id="file-count" class="my-2 text-gray-700"></p>
+                                </div>
+                                {% if form.upload_documents.errors %}
+                                    <div class="text-red-500 font-semibold mt-1">
+                                        {{ form.upload_documents.errors }}    
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if perms.compareapp.add_document or perms.compareapp.add_comparisonreport %}
+                            <div class="flex justify-center md:justify-end mt-4">
+                                <button type="submit" class="flex items-center gap-1 drop-shadow-xl bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-2 px-3 rounded mt-2">
+                                    <img class="size-6" src="{% static 'images/save.png' %}" alt="" srcset="">Save
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="inline-block bg-white text-red-700 font-bold py-2 px-4 rounded mt-2">Permission Denied: You do not have permission to upload files or perform comparison.</div>
+                        {% endif %}
+                    </form>
+                </div>
+                 
+                <div class="md:mt-0 w-full md:w-[30%] flex flex-col md:items-center">
+                    <div class="w-full items-baseline my-3 flex justify-between">
+                        <div class="text-slate-400 font-bold">Uploaded files</div>
+                        <button type="button" onclick="prepareDoc()" class="flex gap-1 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg py-2 px-3">
+                            <img class="size-6" src="{% static 'images/cloud.png' %}" alt="" srcset="">Get Documents
+                        </button>
+                    </div>
+                    <div class="w-full h-full rounded-lg bg-cyan-800 p-4">
+                        <div class="h-[730px] overflow-auto" id="file-list">
+                            <div class="h-full flex"> 
+                                <div class="flex flex-col items-center justify-center">
+                                    <img class="size-14" src="{% static 'images/no-documents.png' %}" alt="No files">
+                                    <p class="mb-4 mt-2 font-bold text-xl text-rose-500">Document Not Found</p>
+                                    <p class="text-center font-semibold text-slate-200">There is no document uploaded yet, please upload files to perform comparison.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Popup for uploading Excel -->
+    <div id="importModal" class="fixed z-50 inset-0 overflow-y-auto hidden bg-black bg-opacity-50">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white p-6 rounded-lg shadow-xl w-2/5">
+                <h1 class="text-2xl font-bold text-slate-800 mb-6">Import Data</h1>
+                <p class="mb-6 text-slate-700">
+                    To get started, please download the provided Excel format, update your data accordingly, and upload the modified file. Afterward, click "Upload" to proceed.
+                </p>
+                <form id="importForm" enctype="multipart/form-data">
+                    <label for="getFile" class="block font-medium text-slate-700 mb-2">Download Excel Format</label>
+                    <div class="flex justify-start">
+                        <a href="{% static 'software-files/Sample_data_sheet.xlsx' %}" class="mb-6 inline-flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg py-2 px-4 shadow-md transition duration-200 ease-in-out">
+                            <img src="{% static 'images/download-icon.png' %}" class="size-6" alt="">
+                            Download Format
+                        </a>
+                    </div>
+    
+                    <label for="excelFile" class="block font-medium text-slate-700 mb-2">Upload Modified Excel</label>
+                    <input type="file" id="excelFile" name="excelFile" accept=".xlsx" class="mb-6 form-input rounded-lg w-full text-slate-700 border border-slate-300 focus:ring-cyan-500 focus:border-cyan-500" required>
+    
+                    <div class="flex justify-end gap-4">
+                        <button type="button" class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-green-500 transition duration-200 ease-in-out" onclick="uploadExcelFile()">Upload</button>
+                        <button type="button" class="bg-gray-300 text-gray-100 px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-gray-400 transition duration-200 ease-in-out" onclick="closeImportModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="divisionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-6/12">
+            <h3 class="text-xl font-extrabold mb-4">Select Document Division</h3>
+            <div>
+                <select id="divisionSelect" class="border rounded-lg p-2 w-full" value="">
+                    <option value="" >Select division</option>
+                </select>
+            </div>
+
+            <div id="documentLinks" class="mt-6 border rounded-lg p-6 hidden">
+                <h3 class="text-xl font-semibold mb-4">Download Documents</h3>
+                <div id="downloadLinks" class="space-y-2 max-h-[250px] overflow-auto">
+                    <a class="underline text-blue-500" href="https://sym.data.com/api/div/??/doc">https://sym.data.com/api/div/??/doc</a>
+                </div>
+            </div> 
+
+            <div class="mt-4 flex justify-end gap-4">
+                <button id="fetchDocumentsBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Fetch Documents
+                </button>
+                <button onclick="removePrepareDoc()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="docSavedModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full">
+            <div class="text-center">
+                <img src="{% static 'images/success.png' %}" class="mx-auto mb-4" width="80" height="80" alt="Success">
+                <h2 class="text-2xl font-bold mb-4 text-green-700">Documents Saved</h2>
+                <p class="text-gray-700 mb-4">Yeah! Documents are ready for the comparison, please start the comparison by clicking on below button.</p>
+                <div class="flex justify-center mt-6 gap-4">
+                    <button id="comparisonBtn" class="bg-green-600 shadow-green-400 hover:bg-green-500 text-white font-semibold rounded-lg py-2 px-6 transition-colors">Start Comparison</butt>
+                    <button id="comparisonCancelBtn" class="bg-red-500 hover:bg-red-400 text-white font-semibold rounded-lg py-2 px-6 transition-colors">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="comparisonSuccess" class="z-30 fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 {% if success %}{% else %}hidden{% endif %}">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full">
+            <div class="text-center">
+                <img src="{% static 'images/success.png' %}" class="mx-auto mb-4" width="80" height="80" alt="Success">
+                <h2 class="text-2xl font-bold mb-4 text-green-700">Comparison Successful</h2>
+                <p class="text-gray-700 mb-4">Documents has been compared successfully. Now you can view the comaprison info by clicking on below buttons.</p>
+                <p class="font-semibold text-gray-900">Report Number: <strong>{{ report_number }}</strong></p>
+                <div class="flex justify-center mt-6 gap-4">
+                    <a href="{% url 'view-comparison' report_number %}" class="bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-lg py-2 px-6 transition-colors">View Report</a>
+                    <a href="{% url 'form' %}" class="bg-gray-300 hover:bg-gray-400 text-white font-semibold rounded-lg py-2 px-6 transition-colors" onclick="closeComparisonSuccessModal()">Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="comparisonTypeModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-5 max-w-xl w-full">
+            <h1 class="text-2xl font-extrabold mb-3">Documents Type Selection</h1>
+            <p class="text-slate-600 mb-3 text-lg">Please select the <strong>Documents Type</strong> you would like to compare.</p>
+            <label for="comparison_between" class="font-semibold mb-2 block">Documents Type :</label>
+            <select name="comparison_between" id="comparison_between" class="border rounded-lg p-2 w-full border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                <option value="">Select documents type</option>
+                <option value="pdf">PDF</option>
+                <option value="docx">Word Document</option>
+                <option value="xlsx">Spreadsheet</option>
+                <option value="png">Image File</option>
+                <option value="pptx">Presentation</option>
+                <option value="vsd">Visio File</option>
+                <option value="wav">Audio (.wav)</option>
+                <option value="mp4">Video (.mp4)</option>
+                <option value="txt">Text File</option>
+                <option value="other">Other</option>
+            </select>
+            <p id="comparisonTypeError" class="text-red-700 mb-3"></p>
+            <div class="text-end">
+                <button type="button" onclick="closeComparisonTypeModal('cancel')" class="rounded text-white font-bold px-3 py-2 mr-3 bg-slate-700">Cancel</button>
+                <button type="button" onclick="closeComparisonTypeModal('')" class="rounded text-white font-bold px-3 py-2 bg-cyan-700">Done</button>
+            </div>
+        </div>
+    </div>    
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Modal and form elements
+            let comparisonTypeModal = document.getElementById("comparisonTypeModal");
+            const comparisonSelect = document.getElementById("comparison_between");
+            const error = document.getElementById("comparisonTypeError");
+            const docFormatField = document.getElementById("documents_format");
+        
+            const comparisonSuccessModal = document.getElementById("comparisonSuccess");
+            const openCTM = {{ perform_comparison|yesno:"true,false" }} ;
+            
+            // Comparison Modal ----------------------------------------
+            
+            const docSavedModal = document.getElementById('docSavedModal');
+            const comparisonBtn = document.getElementById("comparisonBtn");
+            const comparisonCancelBtn = document.getElementById("comparisonCancelBtn");
+
+            const savedFromContext = {{ saved|yesno:"true,false" }};
+            const savedFromLocalStorage = localStorage.getItem('isSaved');
+
+            if (savedFromContext === true) {
+                localStorage.setItem('isSaved', 'True');
+                localStorage.setItem('report_number', "{{ report_number }}");
+                docSavedModal.classList.remove('hidden');
+            }
+
+            if (savedFromLocalStorage === "True") {
+                docSavedModal.classList.remove('hidden');
+            }
+
+
+            comparisonCancelBtn.addEventListener('click', () => {
+                const oldReportNumber = localStorage.getItem('report_number');
+
+                localStorage.removeItem('isSaved'); 
+                localStorage.removeItem('report_number');
+                localStorage.removeItem('comparisonTypeSelected');
+                docSavedModal.classList.add('hidden');  
+
+                const baseUrl = "{% url 'cancel-comparison' %}";
+                window.location.href = `${baseUrl}?report_number=${oldReportNumber}`;
+            });
+
+            comparisonBtn.addEventListener('click', () => {
+                const rn = localStorage.getItem('report_number');
+                localStorage.removeItem('isSaved'); 
+                localStorage.removeItem('report_number');
+                localStorage.removeItem('comparisonTypeSelected');
+                docSavedModal.classList.add('hidden');
+
+                loader.classList.remove('hidden') // show loading effect
+                const baseUrl = "{% url 'compare' %}";
+                window.location.href = `${baseUrl}?report_number=${rn}`;
+            });
+
+
+            // end Comparison Modal ----------------------------------------
+
+
+
+            // Drag and Drop -----------------------
+
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('id_upload_documents');
+            const fileCountDisplay = document.getElementById('file-count');
+            const fileList = document.getElementById('file-list');  // Ensure you add an element for this in your HTML
+            let filesArray = [];
+
+            // Handle drag events
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('bg-gray-400');
+            });
+
+            dropArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('bg-gray-400');
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('bg-gray-400');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            dropArea.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+            // Handle files when dropped or selected
+            function handleFiles(selectedFiles) {
+                const newFiles = Array.from(selectedFiles);
+                filesArray = filesArray.concat(newFiles);
+                updateFileList();
+                updateFileCount();
+                updateFileInput();  // Update the file input to reflect the files in filesArray
+            }
+
+            // Function to update the file count display
+            function updateFileCount() {
+                const count = filesArray.length;
+                fileCountDisplay.textContent = `${count} file(s) selected`;
+            }
+
+            // Function to display the list of selected files
+            function updateFileList() {
+                fileList.innerHTML = ""; // Clear the previous list
+                filesArray.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item font-medium text-slate-600 flex justify-between items-center p-2 bg-gray-100 mb-2 rounded-lg';
+                    fileItem.innerHTML = `
+                        <span>${file.name}</span>
+                        <button type="button" class="" onclick="removeFile(${index})"><img class="size-5" src="{% static 'images/cross.png' %}" alt="remove"></button>
+                    `;
+                    fileList.appendChild(fileItem);
+                });
+            }
+
+            // Function to remove a specific file
+            window.removeFile = function (index) {
+                filesArray.splice(index, 1);  // Remove the file from filesArray
+                updateFileList();
+                updateFileCount();
+                updateFileInput();  // Update the file input to reflect the remaining files
+            }
+
+            // Function to update the file input (hidden) and reset its files after adding/removing
+            function updateFileInput() {
+                const dataTransfer = new DataTransfer();  // Create a new data transfer object
+                filesArray.forEach(file => dataTransfer.items.add(file));  // Re-add the remaining files
+                fileInput.files = dataTransfer.files;  // Update the input's files with the remaining files
+            }
+
+            // end - Drag and Drop -----------------------
+
+
+            // Handling import data ----------------------
+            
+            window.openImportModal = function () {
+                document.getElementById('importModal').classList.remove('hidden');
+            }
+        
+            window.closeImportModal = function () {
+                document.getElementById('importModal').classList.add('hidden');
+            }
+        
+            window.uploadExcelFile = async function () {
+                const excelInput = document.getElementById('excelFile');
+                const file = excelInput.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('excelFile', file);
+        
+                    try {
+                        const response = await fetch("{% url 'import-data' %}", {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        });
+        
+                        const result = await response.json();
+        
+                        if (result.success) {
+                            // Populate the fields with the data from Excel
+                            document.getElementById('description').value = result.data.description;
+                            document.getElementById('short_description').value = result.data.short_description;
+                            document.getElementById('department_type').value = result.data.department_type;
+                            document.getElementById('department_type').value = result.data.department_type;
+                            
+                            closeImportModal(); 
+                        } else {
+                            alert("Please upload valid sample excel sheet.");
+                        }
+                    } catch (error) {
+                        alert("Failed to upload file.");
+                    }
+                } else {
+                    alert("Please upload excel file to populate the data.");
+                }
+            }            
+            
+            // end - Handling import data ----------------
+
+            
+            // Handling Documents Preparation ----------------
+
+            const divisionModal = document.getElementById("divisionModal");
+            const fetchDocumentsBtn = document.getElementById('fetchDocumentsBtn');
+            const documentLinks = document.getElementById('documentLinks');
+            const downloadLinks = document.getElementById('downloadLinks');
+            const divisionSelect = document.getElementById('divisionSelect');
+            
+             // Function to load division options
+            function loadDivisions() {
+                fetch('https://sym.data.com/api/get-all-documents')
+                    .then(response => response.json())
+                    .then(data => {
+                        divisionSelect.innerHTML = '';
+                        data.forEach(division => {
+                            const option = document.createElement('option');
+                            option.value = division.id;
+                            option.textContent = division.name;
+                            divisionSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching divisions:', error);
+                });
+            }
+            
+            window.prepareDoc = () => {
+                loadDivisions();
+                divisionModal.classList.remove('hidden');
+            }
+
+            window.removePrepareDoc = () => {
+                divisionModal.classList.add('hidden');
+            }
+            
+            // Fetch Documents based on selected division
+            fetchDocumentsBtn.addEventListener('click', () => {
+                const selectedDivision = divisionSelect.value;
+
+                if (selectedDivision) {
+                    fetch(`https://sym.data.com/api/fetch-documents/?division_id=${selectedDivision}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            downloadLinks.innerHTML = ''; 
+                            data.forEach(doc => {
+                                const link = document.createElement('a');
+                                link.href = doc.download_link;
+                                link.textContent = doc.name;
+                                link.classList.add('text-blue-500', 'underline');
+                                downloadLinks.appendChild(link);
+                            });
+                            documentLinks.classList.remove('hidden');
+                            // fetchDocumentsBtn.classList.add('hidden');
+                        })
+                        .catch(error => {
+                            console.error('Error fetching documents:', error);
+                        });
+                } else {
+                    alert('Please select a division');
+                }
+            });
+            
+            
+            // end - Handling Documents Preparation ----------------
+
+
+
+            // Retrieve the comparison type from localStorage and set it in the hidden input field
+            const comparisonTypeSelected = localStorage.getItem("comparisonTypeSelected");
+
+            const setDragDropInputAccept = (acceptFormat) => {
+                const dragDropInput = document.getElementById('id_upload_documents');
+                dragDropInput.accept = `.${acceptFormat}`;
+            }
+
+            const updateTitle = (fileType) => {
+                const title = document.getElementById("comparison_between_title");
+
+                if (fileType === 'pdf') {
+                    title.textContent = 'PDFs';
+                } else if (fileType === 'docx') {
+                    title.textContent = 'Documents';
+                } else if (fileType === 'xlsx') {
+                    title.textContent = 'Spreadsheets';
+                } else if (fileType === 'wav') {
+                    title.textContent = 'Audios';
+                } else if (fileType === 'mp4') {
+                    title.textContent = 'Videos';
+                } else if (fileType === 'png') {
+                    title.textContent = 'Images';
+                } else if (fileType === 'txt') {
+                    title.textContent = 'Text Files';
+                } else if (fileType === 'pptx') {
+                    title.textContent = 'Presentations';
+                } else if (fileType === 'vsd') {
+                    title.textContent = 'Visio Files';
+                } else {
+                    title.textContent = 'Files';
+                }
+            };
+            
+            if (comparisonTypeSelected) {
+                docFormatField.value = comparisonTypeSelected
+                updateTitle(comparisonTypeSelected)
+                setDragDropInputAccept(comparisonTypeSelected)
+            } else {
+                setTimeout(() => {
+                    openCTModal();
+                }, 1000);
+            }
+
+            // Open comparison modal
+            window.openCTModal = function() {
+                comparisonTypeModal.classList.remove("hidden");
+            };
+        
+            // Close comparison success modal
+            window.closeComparisonSuccessModal = function() {
+                comparisonSuccessModal.classList.add("hidden");
+            };
+        
+            // Close comparison type modal
+            window.closeComparisonTypeModal = function(op) {
+                const selectedType = comparisonSelect.value;
+                if (op === 'cancel') {
+                    comparisonTypeModal.classList.add("hidden");
+                }
+                else {
+                    if (selectedType) {
+                        localStorage.setItem("comparisonTypeSelected", selectedType);
+                        docFormatField.value = selectedType
+                        updateTitle(selectedType)
+                        setDragDropInputAccept(selectedType)
+                        error.innerText = "";
+                        comparisonTypeModal.classList.add("hidden");    
+                    } else {
+                        error.innerText = "This field is required.";
+                    }
+                }
+            };
+
+            if (openCTM) {
+                openModal();
+            }
+        
+            // If comparison was successful, reset the comparison type in localStorage
+            const isTrue = {{ success|yesno:"true,false" }};
+            if (isTrue) {
+                localStorage.removeItem('comparisonTypeSelected');
+            }
+        });
+        
+    </script>
+
+{% endblock body %}

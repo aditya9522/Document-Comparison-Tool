@@ -1,0 +1,410 @@
+{% load static tailwind_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doc Comparison Pro - {% block title %}{% endblock title %}</title>
+    <link rel="shortcut icon" href="{% static 'images/success.png' %}" type="image/x-icon">
+    {% tailwind_css %}
+    <style>
+        .modal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-closed {
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col relative bg-cover bg-fixed bg-center" style="background-image: url({% static 'images/welcome.jpg' %});">
+
+    {% include "layout/toast.html" with messages=messages %}
+
+    <!-- Header -->
+    <header>
+        <div class="z-40 flex w-full justify-between items-center shadow-black shadow-lg px-10 py-2.5 backdrop-blur-xl bg-cyan-900 bg-opacity-85 text-white fixed">
+            <div>
+                <a href="{% url "dashboard" %}" class="flex items-center gap-4">
+                    {% comment %} <img class="w-200 h-14" src="{% static 'images/logo.png' %}" alt="Doc Comparison Pro Logo"> {% endcomment %}
+                    <p class="hidden md:block text-white md:text-2xl font-semibold"> Document Comparison Pro </p>
+                </a>
+            </div>
+            <div class="flex gap-4 items-center relative">
+                <div class="border-r-2 border-yellow-600 h-8 flex items-center md:block hidden">
+                    <a href="mailto:quality@admin.com" class="text-blue-500 text-lg px-4 hover:text-blue-400 font-semibold">support@doccomparisonpro.com</a>
+                </div>
+                <div class="flex items-center ring-2 ring-cyan-600 rounded-full p-0.5 bg-slate-300" title="Last Login Time">
+                    <img class="size-7 mx-2" src="{% static "images/calendar.png" %}" alt="" srcset="">
+                    {% if user.last_login %}
+                        <p class="bg-cyan-700 text-white py-1 px-2 rounded-full font-bold ">{{ user.last_login|date:"d M Y  h:i A" }}</p>
+                    {% endif %}
+                    </div>
+                <div class="flex items-center ring-2 ring-cyan-600 rounded-full p-0.5 bg-slate-300" title="Your session time counter, after completion you will be logout.">
+                    <img class="size-6 mx-2" src="{% static "images/time.png" %}" alt="" srcset="">
+                    <p id="timer" class="bg-rose-500 text-white py-1 px-2 rounded-full font-bold animate-pulse">00:00:00</p>
+                </div>
+                <div class="relative -mr-1">
+                    {% if user.profile and user.profile.image %}
+                        <img class="size-12 rounded-full bg-gray-300 border-2 border-cyan-500" src="{{user.profile.image.url}}" alt="{{user}}' profile image">
+                    {% else %}
+                        <img class="size-10 rounded-full bg-gray-300 border-2 border-cyan-500" src="{% static "images/user.png" %}" alt="{{user|title}}'s profile image">
+                    {% endif %}
+                    <span class="absolute top-0 right-0 p-1 bg-green-500 rounded-full">
+                        <span class="sr-only">Active</span>
+                    </span>
+                </div>
+                <div class="relative">
+                    <button id="dropdownButton" class="font-medium text-white pr-1 py-1 pl-2 rounded-lg bg-cyan-900 hover:backdrop-blur-3xl hover:bg-cyan-950" type="button">
+                        {% if request.user.is_authenticated %}
+                            {{ request.user.get_full_name|default:request.user.username|title }}
+                        {% else %}
+                            Guest
+                        {% endif %} ▾ 
+                    </button>
+                    <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-md">
+                        <div class="flex justify-center font-extrabold text-lg items-center px-5 py-2 gap-2 border-b">
+                            <img src="{% static 'images/success.png' %}" alt="logo" width="50" height="50"> 
+                            <p class="truncate">
+                                {% if request.user.is_authenticated %}
+                                {{ request.user.get_full_name|default:request.user.username|title }}
+                                {% else %}
+                                Guest
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="{% url "user-profile" request.user.id %}" ><img class="size-6" src="{% static 'images/profile.png' %}" alt="" srcset="">My Profile</a></div>
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="{% url "dashboard" %}" ><img class="size-6" src="{% static 'images/home.png' %}" alt="" srcset="">Home</a></div>
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="{% url "analytics" %}" ><img class="size-6" src="{% static 'images/analytics-icon.png' %}" alt="" srcset="">Analytics</a></div>
+                        {% if user.is_superuser %}
+                            <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="{% url 'user-management' %}"><img class="size-5 mr-0.5" src="{% static 'images/user-managements.png' %}" alt="" srcset="">User management</a></div>
+                        {% endif %}
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" id="feedbackButton" href="#" ><img class="size-6" src="{% static 'images/feed.png' %}" alt="" srcset="">Feedback</a></div>
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="#" id="aboutButton"><img class="size-6" src="{% static 'images/about-icon.png' %}" alt="" srcset="">About</a></div>
+                        <hr>
+                        <div><a class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200" href="{% url "documentation" %}"><img class="size-6" src="{% static 'images/documentation.png' %}" alt="" srcset=""><span class="">Software Documentation</span></a></div>
+                        <div><button class="flex items-center gap-2 px-4 py-2 hover:bg-gray-200 w-full" onclick="clearTimerAndLogout()"><img class="size-6" src="{% static 'images/logout-sys.png' %}" alt="" srcset=""><span class="">Log Out</span></button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 flex flex-col gap-4 items-center justify-center z-50 backdrop-blur-md">
+        <div class="animate-spin border-transparent border-8 border-t-8 border-t-orange-500 rounded-full w-16 h-16"></div>
+        <p class="text-white font-semibold text-lg tracking-wide [text-shadow:_2px_2px_6px_rgb(0_0_0_/_80%)]">
+            Please wait, loading...
+        </p>
+    </div>
+
+    <!-- Modal -->
+    <div id="aboutModal" class="modal modal-closed fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/2 p-6 relative">
+            <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-4xl">&times;</button>
+            <h2 class="text-2xl font-semibold mb-4">About Doc Comparison Pro</h2>
+            <p class="text-lg mb-4">Welcome to Doc Comparison Pro, your go-to solution for comparing documents with ease. Our tool is designed to streamline your workflow and ensure accurate, efficient comparisons.</p>
+            <h3 class="text-xl font-semibold mb-2">Features</h3>
+            <ul class="list-disc list-inside mb-4 ml-4">
+                <li>Compare multiple documents side-by-side.</li>
+                <li>Highlight differences and similarities.</li>
+                <li>Generate detailed comparison reports.</li>
+                <li>User-friendly interface with intuitive navigation.</li>
+            </ul>
+            <h3 class="text-xl font-semibold mb-2">Our Team</h3>
+            <p class="text-lg mb-4">Our team is composed of dedicated professionals who are passionate about document management and technology. We are committed to providing the best tools and support to enhance your productivity.</p>
+            <h3 class="text-xl font-semibold mb-2">Contact Us</h3>
+            <p class="text-lg">For more information or support, please contact us at <a href="mailto:support@doccomparisonpro.com" class="text-blue-500 hover:underline">support@doccomparisonpro.com</a>.</p>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal modal-closed fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/2 p-6 relative">
+            <button id="closeFeedbackModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-4xl">&times;</button>
+            <h2 class="text-2xl font-extrabold mb-4">Your Feedback</h2>
+            <form id="feedbackForm" method="POST" action="{% url 'feedback' %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="feedback" class="block text-lg font-semibold mb-2">Give your valuable feedback</label>
+                    <textarea id="feedback" name="feedback" rows="5" class="form-input w-full rounded-lg border-gray-300 focus:ring-cyan-500 focus:border-cyan-500" placeholder="Enter your feedback..."></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="block text-lg font-semibold mb-2">Your Email (Optional)</label>
+                    <input type="email" id="email" name="email" value="{{user.email}}" class="form-input w-full rounded-lg border-gray-300 focus:ring-cyan-500 focus:border-cyan-500" placeholder="Enter your email address...">
+                </div>
+                <div class="text-right">
+                    {% if perms.compareapp.add_feedback %}
+                        <button type="button" id="backFeedbackModal" class="bg-gray-600 font-bold text-white px-4 py-2 mr-2 rounded-lg hover:bg-gray-500">Back</button>
+                        <button type="submit" class="bg-cyan-600 font-bold text-white px-4 py-2 rounded-lg hover:bg-cyan-500">Submit</button>
+                    {% else %}
+                    <button type="button" id="backFeedbackModal" class="bg-cyan-600 font-bold text-white px-4 py-2 mr-4 rounded-lg hover:bg-cyan-500">Back</button>
+                    <div class="bg-slate-300 font-bold text-red-700 px-4 py-2 rounded-lg inline-block">Permission Denied</div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal modal-closed fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/2 p-6 relative">
+            <button id="closeHelpModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-4xl">&times;</button>
+            <h2 class="text-2xl font-extrabold mb-4">Software Workflow Assistance</h2>
+            <p class="text-lg mb-4 text-slate-500">Here you can find answers to common questions and tips on how to use Doc Comparison Pro effectively.</p>
+            <h3 class="text-xl font-semibold mb-2">Q.1 How to Compare Documents?</h3>
+            <p class="text-lg mb-4 text-slate-500">Ans. To compare documents, simply upload your documents and follow the on-screen instructions. The tool will highlight differences and similarities.</p>
+            <h3 class="text-xl font-semibold mb-2">Q.2 What contains the Report?</h3>
+            <p class="text-lg mb-4 text-slate-500">Ans. The comparison report provides a detailed analysis of the differences and similarities between the documents. You can download or share the report as needed.</p>
+            <hr>
+            <h3 class="text-xl font-semibold my-2">Need Further Assistance?</h3>
+            <p class="text-lg text-slate-500">If you need further assistance, feel free to contact us at <a href="mailto:support@doccomparisonpro.com" class="text-blue-500 hover:underline">support@doccomparisonpro.com</a>.</p>
+        </div>
+    </div>
+
+    <!-- Logout Warning Modal -->
+    <div id="logoutWarningModal" class="fixed inset-0 flex items-center justify-center backdrop-blur-md z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg text-center w-4/12">
+            <h3 class="text-2xl text-center font-extrabold text-slate-500 mb-5">Action Required</h3>
+            <p id="countdown" class="text-center text-red-600 text-3xl font-extrabold animate-ping py-3">10</p>
+            <p class="text-slate-500 my-2">Your session is about to expire due to inactivity. Please click the button below to extend your session.</p>
+            <div class="mt-4 flex justify-center">
+                <button id="stayLoggedInButton" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg font-semibold">
+                    Stay Logged In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content mt-14">
+        {% block body %}{% endblock body %}
+    </div>
+
+    <!-- Footer -->
+    <div class="text-white fixed bottom-14 right-0">
+        <div class="flex flex-col items-end">
+            <img src="{% static 'images/help.png' %}" title="Get Help" id="helpButton" class="size-10 mr-2 cursor-pointer hover:opacity-85" alt="Help">
+        </div>
+    </div>
+    <footer class="text-white fixed bottom-0 right-0">
+        <div class="flex flex-col items-end">
+            <p class="bg-slate-50 rounded p-2 mr-2 mb-2 text-slate-600 shadow-md">&copy; 2024 Doc Comparison Pro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loader = document.getElementById('loader');
+            const dropdownButton = document.getElementById('dropdownButton');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const aboutButton = document.getElementById('aboutButton');
+            const aboutModal = document.getElementById('aboutModal');
+            const closeModal = document.getElementById('closeModal');
+            const helpButton = document.getElementById('helpButton');
+            const helpModal = document.getElementById('helpModal');
+            const closeHelpModal = document.getElementById('closeHelpModal');
+            const feedbackButton = document.getElementById('feedbackButton');
+            const feedbackModal = document.getElementById('feedbackModal');
+            const closeFeedbackModal = document.getElementById('closeFeedbackModal');
+
+            // Toggle dropdown menu
+            dropdownButton.addEventListener('click', function () {
+                dropdownMenu.classList.toggle('hidden');
+            });
+
+            // Open about modal
+            aboutButton.addEventListener('click', function () {
+                aboutModal.classList.remove('modal-closed');
+                aboutModal.classList.add('modal-open');
+            });
+
+            // Close about modal
+            closeModal.addEventListener('click', function () {
+                aboutModal.classList.remove('modal-open');
+                aboutModal.classList.add('modal-closed');
+            });
+
+            // Open help modal
+            helpButton.addEventListener('click', function () {
+                helpModal.classList.remove('modal-closed');
+                helpModal.classList.add('modal-open');
+            });
+
+            // Close help modal
+            closeHelpModal.addEventListener('click', function () {
+                helpModal.classList.remove('modal-open');
+                helpModal.classList.add('modal-closed');
+            });
+
+            // Open feedback modal
+            feedbackButton.addEventListener('click', function () {
+                feedbackModal.classList.remove('modal-closed');
+                feedbackModal.classList.add('modal-open');
+            });
+
+            // Close feedback modal
+            closeFeedbackModal.addEventListener('click', function () {
+                feedbackModal.classList.remove('modal-open');
+                feedbackModal.classList.add('modal-closed');
+            });
+
+            // Close the modal when clicking the "Back" button
+            document.getElementById('backFeedbackModal').addEventListener('click', function() {
+                document.getElementById('feedbackModal').classList.add('modal-closed');
+                document.getElementById('feedbackModal').classList.remove('modal-open');
+            });
+
+            // Close modals when clicking outside
+            document.addEventListener('click', function (event) {
+                if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add('hidden');
+                }
+
+                if (event.target === aboutModal) {
+                    aboutModal.classList.remove('modal-open');
+                    aboutModal.classList.add('modal-closed');
+                }
+
+                if (event.target === helpModal) {
+                    helpModal.classList.remove('modal-open');
+                    helpModal.classList.add('modal-closed');
+                }
+
+                if (event.target === feedbackModal) {
+                    feedbackModal.classList.remove('modal-open');
+                    feedbackModal.classList.add('modal-closed');
+                }
+            });
+
+
+            // Handling Session time for loggedIn user --------------------------------------------
+            
+            let expiryTime = {{ request.session.expiry_time }} * 1000;
+            let startTime = localStorage.getItem('countdownStartTime');
+
+            if (!startTime) {
+                startTime = new Date().getTime();
+                localStorage.setItem('countdownStartTime', startTime);
+            } else {
+                startTime = parseInt(startTime, 10);
+            }
+
+            let countdown = setInterval(function() {
+                let now = new Date().getTime();
+                let elapsedTime = now - startTime;
+                let timeLeft = expiryTime - elapsedTime;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    localStorage.removeItem('countdownStartTime');
+                    document.getElementById("timer").innerHTML = "Session expired.";
+                    window.location.href = "{% url 'logout' %}";
+                    return;
+                }
+
+                let hours = Math.floor(elapsedTime / (1000 * 60 * 60));
+                let minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+
+                hours = hours < 10 ? "0" + hours : hours;
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                document.getElementById("timer").innerHTML = hours + ":" + minutes + ":" + seconds;
+
+            }, 1000);
+
+
+            // Handling user inactivity ------------------------------------------------------------------
+
+            (function() {
+                let logoutTime = 5 * 60 * 1000;  // 5 minutes in milliseconds
+                let warningTime = 10 * 1000;      // 10 seconds in milliseconds
+                let timeout, warningTimeout, countdownInterval;
+                let countdownElement = document.getElementById('countdown');
+                let modal = document.getElementById('logoutWarningModal');
+                let stayLoggedInButton = document.getElementById('stayLoggedInButton');
+                let countdown = 10;
+        
+                function resetTimer(e) {
+                    let target = e.target;
+                    if (modal.contains(target)) {
+                        return;
+                    }
+        
+                    clearTimeout(timeout);
+                    clearTimeout(warningTimeout);
+                    clearInterval(countdownInterval);
+                    hideModal();
+                    countdown = 10;  // Reset countdown
+                    timeout = setTimeout(logout, logoutTime);         // Trigger logout after inactivity
+                    warningTimeout = setTimeout(showWarning, logoutTime - warningTime);  // Show modal 10 seconds before logout
+                }
+        
+                // Show the warning modal and start the countdown
+                function showWarning() {
+                    modal.classList.remove('hidden');
+                    startCountdown();
+                }
+        
+                // Start the 10-second countdown
+                function startCountdown() {
+                    countdownInterval = setInterval(function() {
+                        countdown--;
+                        countdownElement.textContent = countdown; 
+                        if (countdown <= 0) {
+                            clearInterval(countdownInterval);
+                        }
+                    }, 1000);
+                }
+        
+                function hideModal() {
+                    modal.classList.add('hidden');
+                    countdownElement.textContent = 10; 
+                }
+        
+                function logout() {
+                    clearTimer();
+                    window.location.href = "{% url 'logout' %}";
+                }
+        
+                stayLoggedInButton.addEventListener('click', function() {
+                    resetTimer({target: document.body});
+                });
+        
+                // Detect user activity and reset the timer
+                window.onload = resetTimer;
+                window.onmousemove = resetTimer;
+                window.onmousedown = resetTimer;
+                window.ontouchstart = resetTimer;
+                window.onclick = resetTimer;
+                window.onkeypress = resetTimer;
+                window.addEventListener('scroll', resetTimer, true);
+            })();
+
+            function clearTimer() {
+                localStorage.removeItem('countdownStartTime');
+            }
+
+
+            // Hide loader on window load
+            window.onload = function() {
+                loader.classList.add('hidden');
+            };
+        });
+
+        function clearTimerAndLogout() {
+            localStorage.removeItem('countdownStartTime');
+            window.location.href = "{% url 'logout' %}";
+        }
+        
+    </script>
+        
+</body>
+</html>

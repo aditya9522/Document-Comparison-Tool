@@ -1,0 +1,158 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    Dashboard
+{% endblock title %}
+
+{% block body %}
+{% load static %}
+
+    <div class="container mx-auto my-12 px-6">
+        <div class="text-start mb-8">
+            <h1 class="text-3xl font-bold text-white">Dashboard</h1>
+        </div>
+        <div class="flex justify-between mb-4 border border-cyan-900 backdrop-blur-3xl bg-cyan-950 rounded-lg py-3 px-6">
+            <p class="flex items-center text-emerald-500 border-l-8 border-yellow-500 pl-4">Use the button to access Analytics for data insights and view the comparison reports. Start a new comparison when you're ready.</p>
+            <div class="flex items-center gap-4">
+                {% if request.user.is_superuser %}
+                    <a href="{% url "user-logs" %}" class="flex gap-1 items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out">
+                        <img class="size-6" src="{% static 'images/activity-log.png' %}" alt="Analytics Icon" srcset="">
+                        <span>Activity Logs</span>
+                    </a>
+                {% endif %}
+                <a href="{% url "analytics" %}" class="flex gap-1 items-center bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out">
+                    <img class="size-6" src="{% static 'images/analytics-icon.png' %}" alt="Analytics Icon" srcset="">
+                    <span>Analytics</span>
+                </a>
+            </div>
+        </div>
+        <div class="backdrop-blur-3xl bg-cyan-900 shadow-lg rounded-lg p-8 border border-cyan-900">
+                <div class="flex items-center mb-3 justify-between">
+                    <form method="GET" action="" class="flex items-center gap-3 ">
+                        <div class="flex">
+                            <input type="text" name="q" placeholder="Search reports..." value="{{ request.GET.q }}" class="py-2 px-4 border border-gray-300 shadow-sm w-64 focus:ring-1 focus:border-cyan-500 rounded-l-lg" />
+                            <select name="filter" class="w-48 border border-gray-300 rounded-r-lg py-2 px-4 bg-white text-gray-700 focus:ring-1 focus:border-cyan-500">
+                                <option value="">Filter by</option>
+                                <option value="docx">Docx</option>
+                                <option value="pdf">PDF</option>
+                                <option value="xlsx">Spreadsheet</option>
+                                <option value="pptx">Presentation</option>
+                                <option value="vsd">Visio File</option>
+                                <option value="wav">Audio</option>
+                                <option value="mp4">Video</option>
+                                <option value="png">Image</option>
+                                <option value="txt">Text</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="flex gap-2 items-center text-white font-bold bg-cyan-700 hover:bg-cyan-600 rounded-lg px-2 py-2">
+                            <img src="{% static 'images/search.png' %}" alt="Search" class="size-6 text-white" /><span>Search</span>
+                        </button>
+                    </form>
+                    {% if reports and perms.compareapp.add_document %}
+                        <a class="bg-pink-700 hover:bg-pink-600 text-white font-medium rounded-lg py-2 px-3 flex items-center gap-2" href="{% url "form" %}">
+                            <img class="inline-block mt-0 pt-0 size-6" src="{% static 'images/new-comparison.png' %}" alt="" srcset="">
+                            <span>Start Comparison</span>
+                        </a>
+                    {% endif %}
+                </div>
+            {% if perms.compareapp.view_comparisonreport %}
+                {% if reports %}
+                    <div class="rounded-lg max-h-[600px] overflow-auto">
+                        <table class="min-w-full leading-normal rounded-lg overflow-hidden bg-slate-50 text-left">
+                            <thead>
+                                <tr>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">S.No.</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Comparison ID</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Short Description</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Compared Documents</th>
+                                    {% comment %} <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Files format</th> {% endcomment %}
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Department type</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Comparison Date</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">Compared By</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-sm font-semibold text-white uppercase tracking-wider">View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                    <tr class="hover:bg-gray-100">
+                                        <td class="px-5 py-3 border-b border-gray-200">{{ forloop.counter }}</td>
+                                        <td class="px-5 py-3 border-b border-gray-200 text-blue-700 font-medium"><a href="#">{{ report.report_number }}</a></td>
+                                        <td class="px-5 py-3 border-b border-gray-200">
+                                            <div class="max-w-80 truncate" title="Short Description: {{ report.short_description }}">
+                                                {{ report.short_description }}
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 border-b border-gray-200 flex flex-row gap-1 items-center">
+                                            <a href="{% url "compared-documents" report.report_number %}" class="text-[10px] font-medium text-white bg-yellow-500 rounded-full py-1 px-1.5">All</a>
+                                            <div class="p-2 bg-slate-200 rounded w-64 h-[52px] overflow-y-scroll">
+                                                {% for name, id in report.compared_documents.items %}
+                                                    <div class="inline-block mb-1 rounded-full bg-cyan-600 px-2 py-1 z-10">
+                                                        <a href="{% url "view-document" id %}" class="text-white">{{ name }}</a>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        {% comment %} <td class="px-5 py-3 border-b border-gray-200">
+                                            {% if report.comparison_between == "docx" %}
+                                                Docx
+                                            {% elif report.comparison_between == "pdf" %}
+                                                PDF
+                                            {% elif report.comparison_between == "png" %}
+                                                Image
+                                            {% elif report.comparison_between == "wav" %}
+                                                Audio
+                                            {% elif report.comparison_between == "xlsx" %}
+                                                Excel
+                                            {% else %}
+                                                Other
+                                            {% endif %}
+                                        </td> {% endcomment %}
+                                        <td class="px-5 py-3 border-b border-gray-200">
+                                            <div class="max-w-28 truncate" title="Dept. Type: {{ report.department_type }}">
+                                                {{ report.department_type }}
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 border-b border-gray-200">{{ report.comparison_date|date:"d M Y" }}</td>
+                                        <td class="px-5 py-3 border-b border-gray-200">
+                                            <div class="max-w-52 overflow-hidden truncate">
+                                                {{ report.compared_by|title }}
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 border-b border-gray-200">
+                                            <a href="{% url "view-comparison" report.report_number %}" class="size-auto">
+                                                <img class="size-10 hover:bg-gray-200 rounded-full p-2" src="{% static 'images/view.png' %}" alt="Document">
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center mt-5 border rounded-lg p-5 bg-slate-100">
+                        <div class="flex justify-center">
+                            <img src="{% static 'images/success.png' %}" class="mx-auto my-3" width="100" height="100" alt="No reports available">
+                        </div>
+                        <p class="text-gray-700 mb-6 text-3xl font-semibold">Reports Not Available</p>
+                        <p class="text-gray-500 mb-8">It looks like you haven't created any comparison reports yet. Click the button below to start a new comparison.</p>
+                        <a class="inline-flex items-center bg-pink-700 hover:bg-pink-600 text-white font-semibold rounded-lg py-2 px-3 transition duration-300 ease-in-out shadow-md hover:shadow-lg" href="{% url "form" %}">
+                            <img class="inline-block w-6 h-6 mr-2" src="{% static 'images/new-comparison.png' %}" alt="New Comparison">
+                            <span>Start Comparison</span>
+                        </a>
+                    </div>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center mt-5 border rounded-lg p-5 bg-slate-100">
+                    <div class="flex justify-center">
+                        <img src="{% static 'images/permission-error.png' %}" class="mx-auto my-3" width="100" height="100" alt="Permission Denied">
+                    </div>
+                    <p class="text-red-700 mb-6 text-3xl font-semibold">Permission Denied</p>
+                    <p class="text-gray-500 mb-8">You do not have permission to view comparison reports. Please contact your administrator if you believe this is an error.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+{% endblock body %}

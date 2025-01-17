@@ -1,0 +1,92 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    Document Information
+{% endblock title %}
+
+{% block body %}
+{% load static %}
+
+    <div class="container mx-auto my-12 px-6">
+        <div class="text-start mb-8">
+            <h1 class="text-3xl font-bold text-white">Document Insights</h1>
+        </div>
+        
+        <!-- Navigator -->
+        {% include "layout/navigator.html" with pageInfo="Here you can view detailed information about your document and download it if needed." %}
+        
+        <div class="shadow-lg shadow-slate-800 rounded-lg p-6 backdrop-blur-3xl bg-cyan-900">
+            <div class="flex justify-between items-center mb-4">
+                <div class="rounded p-2 text-slate-400 bg-slate-100 font-semibold">
+                    Document Number :  <span class="text-blue-600 font-bold">{{ document.report_number }}<span class="font-normal text-slate-400">/</span>{{ document.document_id }}</span>
+                </div>
+            </div>
+            {% if perms.compareapp.view_document %}
+                {% if document %}
+                    <div class="overflow-auto">
+                        <table class="min-w-full leading-normal rounded-lg overflow-hidden bg-slate-50">
+                            <thead>
+                                <tr>
+                                    <th class="px-5 py-3 bg-slate-600 text-sm font-semibold text-white uppercase text-left">Attributes</th>
+                                    <th class="px-5 py-3 bg-slate-600 text-sm font-semibold text-white uppercase text-left">Information</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-5 py-3 border-b border-gray-200">Document ID</td>
+                                    <td class="px-5 py-3 border-b border-gray-200">{{ document.document_id }}</td>
+                                </tr>
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-5 py-3 border-b border-gray-200">Creation Date</td>
+                                    <td class="px-5 py-3 border-b border-gray-200">{{ document.creation_date }}</td>
+                                </tr>
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-5 py-3 border-b border-gray-200">Document Format</td>
+                                    <td class="px-5 py-3 border-b border-gray-200">{{ document.comparison_between }}</td>
+                                </tr>
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-5 py-3 border-b border-gray-200">Comparison Status</td>
+                                    <td class="px-5 py-3 border-b border-gray-200">
+                                        <div class="flex items-center">
+                                            {% if document.comparison_status == 'Compared' %}
+                                                <p class="px-3 py-1.5 bg-green-500 text-white rounded-full font-medium">Success</p>
+                                            {% else %}
+                                                <p class="px-5 py-1.5 bg-red-500 text-white rounded-full font-medium">Failed</p>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-5 py-3 border-b border-gray-200">Action</td>
+                                    <td class="px-5 py-3 border-b border-gray-200">
+                                        <a href="{{ document.upload_documents.url }}" class="hover:bg-slate-200 rounded-full">
+                                            <img src="{% static 'images/download-icon.png' %}" class="size-8" title="Download" alt="">
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center">
+                        <img src="{% static 'images/no-documents.png' %}" alt="No documents found" class="size-32 mb-8 opacity-75">
+                        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Document Not Found</h2>
+                        <p class="text-gray-500 mb-8">That document is not available please provide valid identity</p>
+                        <a class="bg-blue-700 hover:bg-blue-600 text-white rounded-lg py-3 px-6 text-lg font-medium shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg" href="{% url 'dashboard' %}">
+                            Go Back
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+            <div class="text-center mt-5 border rounded-lg p-5 bg-slate-100">
+                <div class="flex justify-center">
+                    <img src="{% static 'images/permission-error.png' %}" class="mx-auto my-3" width="100" height="100" alt="Permission Denied">
+                </div>
+                <p class="text-red-700 mb-6 text-3xl font-semibold">Permission Denied</p>
+                <p class="text-gray-500 mb-8">You do not have permission to view documents. Please contact your administrator if you believe this is an error.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock body %}

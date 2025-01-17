@@ -1,0 +1,152 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    Documents
+{% endblock title %}
+
+{% block body %}
+{% load static %}
+
+    <div class="container mx-auto my-12 px-6">
+        <div class="text-start mb-8">
+            <h1 class="text-3xl font-bold text-white">Compared Documents</h1>
+        </div>
+       
+        <!-- Navigator -->
+        {% include "layout/navigator.html" with pageInfo="View and manage your all initialised documents that are ready for comparision." %}
+        
+        <div class="backdrop-blur-3xl bg-cyan-900 shadow-lg shadow-slate-800 rounded-lg p-8">
+            <div class="mb-5 flex justify-between">
+                <form method="GET" action="" class="flex items-center gap-3 ">
+                    <div class="flex">
+                        <input type="text" name="q" placeholder="Search document..." value="{{ request.GET.q }}" class="py-2 px-4 border border-gray-300 shadow-sm w-64 focus:ring-1 focus:border-cyan-500 rounded-l-lg" />
+                        <select name="filter" class="w-48 border border-gray-300 rounded-r-lg py-2 px-4 bg-white text-gray-700 focus:ring-1 focus:border-cyan-500">
+                            <option value="">Filter by</option>
+                            <option value="docx">Docx</option>
+                            <option value="pdf">PDF</option>
+                            <option value="xlsx">Spreadsheet</option>
+                            <option value="pptx">Presentation</option>
+                            <option value="vsd">Visio File</option>
+                            <option value="wav">Audio</option>
+                            <option value="mp4">Video</option>
+                            <option value="png">Image</option>
+                            <option value="txt">Text</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="flex gap-2 items-center text-white font-bold bg-cyan-700 hover:bg-cyan-600 rounded-lg px-2 py-2">
+                        <img src="{% static 'images/search.png' %}" alt="Search" class="size-6 text-white" /><span>Search</span>
+                    </button>
+                </form>
+            </div>
+
+            {% if perms.compareapp.view_document %}
+                {% if documents %}
+                    <div class="overflow-auto">
+                        <table class="min-w-full leading-normal rounded-lg overflow-hidden bg-slate-50">
+                            <thead>
+                                <tr>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-left text-[13px] font-semibold text-white uppercase tracking-wider">Document ID</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-left text-[13px] font-semibold text-white uppercase tracking-wider">Creation Date</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-left text-[13px] font-semibold text-white uppercase tracking-wider">Documents Format</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-left text-[13px] font-semibold text-white uppercase tracking-wider">Comparison Status</th>
+                                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-slate-600 text-left text-[13px] font-semibold text-white uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in documents %}
+                                    <tr class="hover:bg-gray-100">
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">{{ document.document_id }}</td>
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">{{ document.creation_date }}</td>
+                                        <td class="px-5 py-5 border-b border-gray-200">
+                                            {% if document.comparison_between == "docx" %}
+                                                Docx
+                                            {% elif document.comparison_between == "pdf" %}
+                                                PDF
+                                            {% elif document.comparison_between == "png" %}
+                                                Image
+                                            {% elif document.comparison_between == "wav" %}
+                                                Audio
+                                            {% elif document.comparison_between == "xlsx" %}
+                                                Excel
+                                            {% else %}
+                                                Other
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                            {{ document.comparison_status }}
+                                        </td>
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm flex gap-4">
+                                            <a href="{{ document.upload_documents.url }}" target="_blank" class="hover:bg-slate-200 rounded-full px-2.5 py-2"><img src="{% static 'images/download-icon.png' %}" class="h-5 w-4" title="Download" alt=""></a>
+                                            {% comment %} <button onclick="openDeleteModal({{ document.document_id }})" class="ml-1 hover:bg-slate-200 rounded-full px-2.5 py-2"><img src="{% static 'images/delete.png' %}" alt="" class="h-4 w-4" title="Delete"></button> {% endcomment %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center border rounded-lg p-5 bg-slate-100">
+                        <img src="{% static 'images/no-documents.png' %}" alt="No documents found" class="size-32 mb-8 opacity-75">
+                        <h2 class="text-2xl font-semibold text-gray-700 mb-4">No Documents Available</h2>
+                        <p class="text-gray-500 mb-8">We didn't get any uploaded documents yet. Start by uploading documents to get started.</p>
+                        <a class="bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg py-3 px-6 text-lg font-medium shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg" href="{% url 'form' %}">
+                            Upload Documents
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+            <div class="text-center mt-5 border rounded-lg p-5 bg-slate-100">
+                <div class="flex justify-center">
+                    <img src="{% static 'images/permission-error.png' %}" class="mx-auto my-3" width="100" height="100" alt="Permission Denied">
+                </div>
+                <p class="text-red-700 mb-6 text-3xl font-semibold">Permission Denied</p>
+                <p class="text-gray-500 mb-8">You do not have permission to view documents. Please contact your administrator if you believe this is an error.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+     
+    <!-- Modals -->
+
+    <div id="deleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full">
+            <h2 class="text-2xl font-bold mb-4">Delete Document</h2>
+            <form id="deleteForm">
+                <div class="mb-4">
+                    <h5>Are you sure, want to delete the document?</h5>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" class="bg-slate-400 hover:bg-slate-400 text-white rounded-lg py-2 px-4 mr-2" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="submit" class="bg-red-800 hover:bg-red-700 text-white rounded-lg py-2 px-4 mr-2">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const deleteModal = document.getElementById("deleteModal");
+            let deleteForm = document.getElementById("deleteForm");
+
+            window.closeDeleteModal = function() {
+                deleteModal.classList.add("hidden");
+            };
+
+            // Function to open the delete modal
+            window.openDeleteModal = function(id) {
+                deleteModal.classList.remove("hidden");
+
+                // Remove previous event listeners to prevent multiple bindings
+                deleteForm.replaceWith(deleteForm.cloneNode(true));
+                deleteForm = document.getElementById("deleteForm");
+
+                deleteForm.addEventListener("submit", function(event) {
+                    event.preventDefault();
+                    const url = `{% url 'remove-doc' 0 %}`.replace('0', id);
+                    window.location.href = url;
+                });
+            };
+        });
+    </script>
+{% endblock body %}
